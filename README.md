@@ -1,4 +1,6 @@
-# mlat-server, wiedehopf fork
+# mlat-server, sdrmap fork
+
+This is the sdrmap.org fork of mlat-server. We basically just add some authentification to wiedehopfs fork in the sdrmap-branch.
 
 This is a Mode S multilateration server that is designed to operate with
 clients that do _not_ have synchronized clocks.
