@@ -33,6 +33,8 @@ import sys
 import math
 import re
 
+from aprmd5 import password_validate
+
 from mlat import constants, geodesy
 from mlat import net, util, connection, config
 
@@ -319,6 +321,7 @@ class JsonClient(connection.Connection):
 
     async def process_handshake(self):
         deny = None
+        alreadyauthed = False
 
         rawline = await asyncio.wait_for(self.r.readline(), timeout=15.0)
         try:
@@ -340,7 +343,14 @@ class JsonClient(connection.Connection):
                 if hs['version'] != 2 and hs['version'] != 3:
                     raise ValueError('Unsupported version in handshake')
 
-                user = str(hs['user'])
+                auth = str(hs['user'])
+                auth = auth.split(":")
+
+                if len(auth) != 2:
+                    raise ValueError("No API-key given. Please check your credentials.")
+
+                user = auth[0]
+
                 uuid = hs.get('uuid')
 
                 # replace bad characters with an underscore
@@ -350,6 +360,20 @@ class JsonClient(connection.Connection):
                     user = user[:40]
                 if len(user) < 3:
                     user = user + '_' + str(random.randrange(10,99))
+
+                """Read htpasswd file and authenticate the user"""
+                lines = open("auth/htpasswd", "r").readlines()
+                authenticated = False
+                
+                for line in lines:
+                    username, pwhash = line.split(":")
+                    if username == user:
+                        authenticated = password_validate(auth[1], pwhash.rstrip())
+                    if authenticated:
+                        break
+                    
+                if authenticated is False:
+                    raise ValueError("Authentification failed. Please check your credentials.")
 
                 if user in self.coordinator.usernames:
                     existingReceiver = self.coordinator.usernames[user]
@@ -362,7 +386,6 @@ class JsonClient(connection.Connection):
                         while tries > 0 and user in self.coordinator.usernames:
                             tries -= 1
                             user = user + '_' + str(random.randrange(100,999))
-
 
                 peer_compression_methods = set(hs['compress'])
                 self.compress = None
@@ -437,7 +460,10 @@ class JsonClient(connection.Connection):
 
         if deny:
             self.logger.warning('Handshake failed: %s', deny)
-            self.write_raw(deny=[deny], reconnect_in=util.fuzzy(900))
+            if alreadyauthed is True:
+                self.write_raw(deny=[deny], reconnect_in=util.fuzzy(15))
+            else:
+                self.write_raw(deny=[deny], reconnect_in=util.fuzzy(900))
             return False
 
         expanded_motd = """
