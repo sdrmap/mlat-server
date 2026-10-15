@@ -7,4 +7,4 @@ objgraph
 uvloop
 ujson
 Cython
-aprmd5
+passlib

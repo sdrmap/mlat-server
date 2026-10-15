@@ -33,7 +33,7 @@ import sys
 import math
 import re
 
-from aprmd5 import password_validate
+from passlib.apache import HtpasswdFile
 
 from mlat import constants, geodesy
 from mlat import net, util, connection, config
@@ -360,18 +360,10 @@ class JsonClient(connection.Connection):
                     user = user[:40]
                 if len(user) < 3:
                     user = user + '_' + str(random.randrange(10,99))
-
-                """Read htpasswd file and authenticate the user"""
-                lines = open("auth/htpasswd", "r").readlines()
-                authenticated = False
                 
-                for line in lines:
-                    username, pwhash = line.split(":")
-                    if username == user:
-                        authenticated = password_validate(auth[1], pwhash.rstrip())
-                    if authenticated:
-                        break
-                    
+                ht = HtpasswdFile("auth/htpasswd", default_scheme="portable")
+                authenticated = ht.check_password(user, auth[1])
+                
                 if authenticated is False:
                     raise ValueError("Authentification failed. Please check your credentials.")
 
