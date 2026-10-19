@@ -77,7 +77,8 @@ class JsonClientListener(net.MonitoringListener):
                           motd=self.motd,
                           udp_protocol=self.udp_protocol,
                           udp_host=self.host,
-                          udp_port=self.udp_port)
+                          udp_port=self.udp_port,
+                          auth=self.auth)
 
     def _close(self):
         super()._close()
@@ -167,12 +168,13 @@ class JsonClient(connection.Connection):
     write_heartbeat_interval = 30.0
     read_heartbeat_interval = 150.0
 
-    def __init__(self, reader, writer, *, coordinator, motd, udp_protocol, udp_host, udp_port):
+    def __init__(self, reader, writer, *, coordinator, motd, udp_protocol, udp_host, udp_port, auth):
         self.r = reader
         self.w = writer
         self.coordinator = coordinator
         self.loop = coordinator.loop
         self.motd = motd
+        self.auth = auth
 
         self.sync_accepted = 0
         self.sync_rejected = 0
