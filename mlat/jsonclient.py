@@ -322,6 +322,7 @@ class JsonClient(connection.Connection):
 
     async def process_handshake(self):
         deny = None
+        authenticated = False
 
         rawline = await asyncio.wait_for(self.r.readline(), timeout=15.0)
         try:
