@@ -304,6 +304,9 @@ class JsonClient(connection.Connection):
 
             await self.handle_messages()
 
+        except ValueError as e:
+            self.logger.warning(str(e))
+        
         except asyncio.IncompleteReadError:
             self.logger.info('Client EOF')
 
@@ -363,10 +366,7 @@ class JsonClient(connection.Connection):
                 if len(user) < 3:
                     user = user + '_' + str(random.randrange(10,99))
                 
-                try:
-                        authenticated = auth.authenticate(user, passwd)
-                except FileNotFoundError as e:
-                        print(e)
+                authenticated = auth.authenticate(user, passwd)
                 
                 if authenticated is False:
                     raise ValueError("Authentification failed. Please check your credentials.")
@@ -455,9 +455,8 @@ class JsonClient(connection.Connection):
                 deny = 'Bad values in handshake: ' + str(e)
 
         if deny:
-            self.logger.warning('Handshake failed: %s', deny)
             self.write_raw(deny=[deny], reconnect_in=util.fuzzy(300))
-            return False
+            raise ValueError(f'Station {user} was rejected: {deny}')
 
         expanded_motd = """
 
