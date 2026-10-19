@@ -33,7 +33,7 @@ import sys
 import math
 import re
 
-from auth import HtpasswdAuthenticator
+from mlat.auth import HtpasswdAuthenticator
 
 from mlat import constants, geodesy
 from mlat import net, util, connection, config
