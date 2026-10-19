@@ -33,7 +33,7 @@ import sys
 import math
 import re
 
-from passlib.apache import HtpasswdFile
+from auth import HtpasswdAuthenticator
 
 from mlat import constants, geodesy
 from mlat import net, util, connection, config
@@ -42,6 +42,7 @@ from mlat import net, util, connection, config
 glogger = logging.getLogger("client")
 random.seed()
 
+auth = HtpasswdAuthenticator("auth/htpasswd")
 
 class JsonClientListener(net.MonitoringListener):
     def __init__(self, host, tcp_port, udp_port, motd, coordinator):
@@ -321,7 +322,6 @@ class JsonClient(connection.Connection):
 
     async def process_handshake(self):
         deny = None
-        alreadyauthed = False
 
         rawline = await asyncio.wait_for(self.r.readline(), timeout=15.0)
         try:
@@ -343,13 +343,13 @@ class JsonClient(connection.Connection):
                 if hs['version'] != 2 and hs['version'] != 3:
                     raise ValueError('Unsupported version in handshake')
 
-                auth = str(hs['user'])
-                auth = auth.split(":")
+                creds = str(hs['user'])
+                passwd = creds.split(":")
 
-                if len(auth) != 2:
+                if len(creds) != 2:
                     raise ValueError("No API-key given. Please check your credentials.")
 
-                user = auth[0]
+                user = creds[0]
 
                 uuid = hs.get('uuid')
 
@@ -361,8 +361,10 @@ class JsonClient(connection.Connection):
                 if len(user) < 3:
                     user = user + '_' + str(random.randrange(10,99))
                 
-                ht = HtpasswdFile("auth/htpasswd", default_scheme="portable")
-                authenticated = ht.check_password(user, auth[1])
+                try:
+                        authenticated = auth.authenticate(user, passwd)
+                except FileNotFoundError as e:
+                        print(e)
                 
                 if authenticated is False:
                     raise ValueError("Authentification failed. Please check your credentials.")
@@ -452,10 +454,7 @@ class JsonClient(connection.Connection):
 
         if deny:
             self.logger.warning('Handshake failed: %s', deny)
-            if alreadyauthed is True:
-                self.write_raw(deny=[deny], reconnect_in=util.fuzzy(15))
-            else:
-                self.write_raw(deny=[deny], reconnect_in=util.fuzzy(900))
+            self.write_raw(deny=[deny], reconnect_in=util.fuzzy(300))
             return False
 
         expanded_motd = """
