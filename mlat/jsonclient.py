@@ -42,7 +42,7 @@ from mlat import net, util, connection, config
 glogger = logging.getLogger("client")
 random.seed()
 
-auth = HtpasswdAuthenticator("auth/htpasswd")
+auth = HtpasswdAuthenticator(config.AUTH_FILE)
 
 class JsonClientListener(net.MonitoringListener):
     def __init__(self, host, tcp_port, udp_port, motd, coordinator):
