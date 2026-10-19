@@ -62,9 +62,6 @@ SOLVER_MAXFEV = 165
 # first pruning step before clock normalization
 MAX_GROUP = 15
 
-# auth file path
-AUTH_FILE = "/opt/mlat/htpasswd"
-
 DEBUG_FOCUS='euerdorf'
 
 if 'AGPL_SERVER_CODE_URL' not in globals():

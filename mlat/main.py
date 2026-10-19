@@ -161,6 +161,10 @@ class MlatServer(object):
         parser.add_argument('--status-interval',
                             help="Status logging interval in seconds, multiple of 15, -1 to disable, default 15",
                             default=15)
+                            
+        parser.add_argument('--auth-file',
+                            help="Location of the htpasswd file used to authenticate stations with passwords",
+                            default='/opt/mlat/htpasswd')
 
     def make_arg_parser(self):
         parser = argparse.ArgumentParser(description="Multilateration server.")
@@ -179,7 +183,8 @@ class MlatServer(object):
                                                           tcp_port=tcp_port,
                                                           udp_port=udp_port,
                                                           coordinator=self.coordinator,
-                                                          motd=args.motd))
+                                                          motd=args.motd,
+                                                          auth_file=args.auth_file))
 
         return subtasks
 
@@ -224,6 +229,7 @@ class MlatServer(object):
             import tracemalloc
             tracemalloc.start()
             subtasks.append(leakcheck.LeakChecker())
+        
 
         return subtasks
 

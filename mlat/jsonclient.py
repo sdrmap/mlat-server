@@ -42,15 +42,14 @@ from mlat import net, util, connection, config
 glogger = logging.getLogger("client")
 random.seed()
 
-auth = HtpasswdAuthenticator(config.AUTH_FILE)
-
 class JsonClientListener(net.MonitoringListener):
-    def __init__(self, host, tcp_port, udp_port, motd, coordinator):
+    def __init__(self, host, tcp_port, udp_port, motd, coordinator, auth_file):
         super().__init__(host, tcp_port, None, logger=glogger, description='JSON client handler')
         self.coordinator = coordinator
         self.loop = coordinator.loop
         self.udp_port = udp_port
         self.motd = motd
+        self.auth = HtpasswdAuthenticator(auth_file)
 
         self.udp_transport = None
         self.udp_protocol = None
@@ -366,7 +365,7 @@ class JsonClient(connection.Connection):
                 if len(user) < 3:
                     user = user + '_' + str(random.randrange(10,99))
                 
-                authenticated = auth.authenticate(user, passwd)
+                authenticated = self.auth.authenticate(user, passwd)
                 
                 if authenticated is False:
                     raise ValueError("Authentification failed. Please check your credentials.")
