@@ -344,12 +344,13 @@ class JsonClient(connection.Connection):
                     raise ValueError('Unsupported version in handshake')
 
                 creds = str(hs['user'])
-                passwd = creds.split(":")
+                creds = creds.split(":")
 
                 if len(creds) != 2:
                     raise ValueError("No API-key given. Please check your credentials.")
 
                 user = creds[0]
+                passwd = creds[1]
 
                 uuid = hs.get('uuid')
 
